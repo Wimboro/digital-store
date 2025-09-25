@@ -153,6 +153,8 @@ function formatGatewayLabel(gateway: string) {
       return "Xendit";
     case "duitku":
       return "Duitku";
+    case "auto-qris":
+      return "Auto QRIS";
     case "manual-qris":
       return "Manual QRIS";
     default:

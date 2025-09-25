@@ -9,13 +9,14 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 
 interface SuccessPageProps {
-  searchParams: {
+  searchParams: Promise<{
     orderNumber?: string;
-  };
+  }>;
 }
 
 export default async function SuccessPage({ searchParams }: SuccessPageProps) {
-  const orderNumber = searchParams.orderNumber;
+  const params = await searchParams;
+  const orderNumber = params.orderNumber;
 
   if (!orderNumber) {
     return (

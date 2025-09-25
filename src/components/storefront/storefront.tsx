@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,6 +30,8 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import QRCode from "qrcode";
 import { formatIDR } from "@/lib/currency";
 import type { StoreSettings, StorefrontProduct } from "@/lib/serializers";
 
@@ -41,16 +43,36 @@ const checkoutSchema = z.object({
 
 type CheckoutValues = z.infer<typeof checkoutSchema>;
 
+type ManualPaymentAction = {
+  type: "manual";
+  instructions?: string;
+  qrImageUrl?: string | null;
+};
+
+type RedirectPaymentAction = {
+  type: "redirect";
+  url: string;
+};
+
+type AutoQrisPaymentAction = {
+  type: "auto_qris";
+  qrString: string;
+  orderReference: string;
+  amounts: {
+    original: string;
+    unique: string;
+    combined: string;
+  };
+  instructions?: string;
+};
+
+type PaymentAction = ManualPaymentAction | RedirectPaymentAction | AutoQrisPaymentAction;
+
 type CheckoutResponse = {
   orderId: string;
   orderNumber: string;
   paymentGateway: string;
-  paymentAction?: {
-    type: "manual" | "redirect";
-    instructions?: string;
-    qrImageUrl?: string | null;
-    url?: string;
-  };
+  paymentAction?: PaymentAction;
 };
 
 interface StorefrontProps {
@@ -405,36 +427,182 @@ function CheckoutSheet({
 }
 
 function CheckoutResult({ result }: { result: CheckoutResponse | null }) {
+  const router = useRouter();
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
+  const [paid, setPaid] = useState(false);
+
+  const action = result?.paymentAction;
+
+  const formatAutoQrisAmount = useCallback((value: string) => {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? formatIDR(numeric) : value;
+  }, []);
+
+  useEffect(() => {
+    if (!action || action.type !== "auto_qris") {
+      setQrDataUrl(null);
+      return;
+    }
+
+    QRCode.toDataURL(action.qrString, { errorCorrectionLevel: "M" })
+      .then(setQrDataUrl)
+      .catch(() => {
+        toast.error("Gagal membuat QR code dinamis");
+      });
+  }, [action]);
+
+  const verifyPayment = useCallback(
+    async (showFeedback: boolean) => {
+      if (!result || !action || action.type !== "auto_qris") {
+        return;
+      }
+
+      if (showFeedback) {
+        setVerifying(true);
+      }
+
+      try {
+        const response = await fetch("/api/payments/auto-qris/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderNumber: result.orderNumber,
+            combinedAmount: action.amounts.combined,
+          }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error ?? "Verifikasi pembayaran gagal");
+        }
+
+        if (data.paid) {
+          setPaid(true);
+          toast.success("Pembayaran terverifikasi");
+          router.push(`/success?orderNumber=${result.orderNumber}`);
+        } else if (showFeedback) {
+          toast.info("Belum ada pembayaran yang terdeteksi");
+        }
+      } catch (error) {
+        if (showFeedback) {
+          toast.error(
+            error instanceof Error ? error.message : "Tidak dapat memeriksa status pembayaran",
+          );
+        }
+      } finally {
+        if (showFeedback) {
+          setVerifying(false);
+        }
+      }
+    },
+    [action, result, router],
+  );
+
+  useEffect(() => {
+    if (!result || !action || action.type !== "auto_qris" || paid) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      void verifyPayment(false);
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [action, paid, result, verifyPayment]);
+
   if (!result) return null;
 
   return (
     <section className="rounded-xl border bg-muted/30 p-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="space-y-2">
           <p className="text-sm text-muted-foreground">Order berhasil dibuat</p>
           <h3 className="text-xl font-semibold">Nomor Order {result.orderNumber}</h3>
+          <p className="text-sm text-muted-foreground">
+            Gateway: {formatGatewayLabel(result.paymentGateway)}
+          </p>
         </div>
-        <div className="space-y-2 text-sm">
-          <p>Gateway: {formatGatewayLabel(result.paymentGateway)}</p>
-              {result.paymentAction?.type === "manual" && (
-                <div className="space-y-2 rounded-lg border bg-background p-3">
-                  <p className="font-medium">Instruksi Pembayaran</p>
-                  <p className="text-muted-foreground">{result.paymentAction.instructions}</p>
-                  {result.paymentAction.qrImageUrl && (
-                    <Image
-                      src={result.paymentAction.qrImageUrl}
-                      alt="QRIS"
-                      width={160}
-                      height={160}
-                      className="mt-2 h-40 w-40 rounded-lg border object-cover"
-                    />
-                  )}
-                </div>
+
+        <div className="space-y-4 text-sm md:max-w-md">
+          {action?.type === "manual" && (
+            <div className="space-y-2 rounded-lg border bg-background p-3">
+              <p className="font-medium">Instruksi Pembayaran</p>
+              <p className="text-muted-foreground">{action.instructions}</p>
+              {action.qrImageUrl && (
+                <Image
+                  src={action.qrImageUrl}
+                  alt="QRIS"
+                  width={200}
+                  height={200}
+                  className="mt-2 h-48 w-48 rounded-lg border object-cover"
+                />
               )}
-          {result.paymentAction?.type === "redirect" && result.paymentAction.url && (
+            </div>
+          )}
+
+          {action?.type === "redirect" && action.url && (
             <Button asChild variant="secondary">
-              <a href={result.paymentAction.url}>Lanjut ke Pembayaran</a>
+              <a href={action.url}>Lanjut ke Pembayaran</a>
             </Button>
+          )}
+
+          {action?.type === "auto_qris" && (
+            <div className="space-y-4 rounded-lg border bg-background p-4">
+              <div className="space-y-3">
+                <p className="font-medium">Pindai QRIS Dinamis</p>
+                {qrDataUrl ? (
+                  <Image
+                    src={qrDataUrl}
+                    alt="QRIS Dinamis"
+                    width={240}
+                    height={240}
+                    className="mx-auto h-60 w-60 rounded-lg border bg-white object-contain p-3"
+                  />
+                ) : (
+                  <div className="flex h-60 w-60 items-center justify-center rounded-lg border bg-muted">
+                    <p className="text-xs text-muted-foreground">Menyiapkan QR...</p>
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Referensi Pembayaran: <span className="font-medium">{action.orderReference}</span>
+                </p>
+                {action.instructions && (
+                  <p className="rounded-md bg-muted p-2 text-sm text-muted-foreground">
+                    {action.instructions}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <p className="font-medium">Detail Pembayaran</p>
+                <div className="grid gap-2 rounded-lg border bg-muted/40 p-3 text-sm">
+                  <p>
+                    <span className="text-muted-foreground">Jumlah Asli:</span>{" "}
+                    <span className="font-semibold">{formatAutoQrisAmount(action.amounts.original)}</span>
+                  </p>
+                  <p>
+                    <span className="text-muted-foreground">Kode Unik:</span>{" "}
+                    <span className="font-semibold">{formatAutoQrisAmount(action.amounts.unique)}</span>
+                  </p>
+                  <p>
+                    <span className="text-muted-foreground">Total Dibayar:</span>{" "}
+                    <span className="font-semibold">{formatAutoQrisAmount(action.amounts.combined)}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <Button onClick={() => verifyPayment(true)} disabled={verifying || paid}>
+                  {verifying ? "Memeriksa..." : paid ? "Pembayaran Terverifikasi" : "Saya telah membayar"}
+                </Button>
+                {!paid && (
+                  <p className="text-xs text-muted-foreground">
+                    Sistem akan memeriksa otomatis setiap 10 detik.
+                  </p>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -452,6 +620,8 @@ function formatGatewayLabel(gateway: string) {
       return "Xendit";
     case "duitku":
       return "Duitku";
+    case "auto-qris":
+      return "Auto QRIS";
     case "manual-qris":
       return "Manual QRIS";
     default:

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { NormalizedOrder } from "@/lib/orders";
 import type { DownloadToken, Product } from "@prisma/client";
 import { formatIDR } from "@/lib/currency";
@@ -24,6 +24,22 @@ export function OrderDetail({ order, tokens }: OrderDetailProps) {
   const [paymentRef, setPaymentRef] = useState(order.paymentRef ?? "");
   const [invoiceUrl, setInvoiceUrl] = useState(order.invoiceUrl ?? "");
   const [loading, setLoading] = useState(false);
+
+  const autoQrisMeta = useMemo(() => {
+    if (order.paymentGateway !== "auto-qris" || !order.invoiceUrl) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(order.invoiceUrl) as {
+        combinedAmount?: string;
+        uniqueAmount?: string;
+        originalAmount?: string;
+      };
+    } catch {
+      return null;
+    }
+  }, [order.invoiceUrl, order.paymentGateway]);
 
   const handleUpdate = async (options?: { resendEmail?: boolean }) => {
     setLoading(true);
@@ -95,6 +111,24 @@ export function OrderDetail({ order, tokens }: OrderDetailProps) {
               <Input value={invoiceUrl} onChange={(event) => setInvoiceUrl(event.target.value)} />
             </div>
           </div>
+
+          {order.paymentGateway === "auto-qris" && autoQrisMeta && (
+            <div className="space-y-2 rounded-lg border bg-muted/30 p-3 text-sm">
+              <p className="font-medium">Detail Auto QRIS</p>
+              <p>
+                <span className="text-muted-foreground">Jumlah Asli:</span>{" "}
+                <span className="font-semibold">{formatIDR(Number(autoQrisMeta.originalAmount ?? 0))}</span>
+              </p>
+              <p>
+                <span className="text-muted-foreground">Kode Unik:</span>{" "}
+                <span className="font-semibold">{formatIDR(Number(autoQrisMeta.uniqueAmount ?? 0))}</span>
+              </p>
+              <p>
+                <span className="text-muted-foreground">Total Dibayar:</span>{" "}
+                <span className="font-semibold">{formatIDR(Number(autoQrisMeta.combinedAmount ?? 0))}</span>
+              </p>
+            </div>
+          )}
 
           <div className="flex flex-wrap gap-3">
             <Button onClick={() => handleUpdate()} disabled={loading}>

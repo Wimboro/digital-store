@@ -17,6 +17,7 @@ const gatewayOptions = [
   { value: "midtrans", label: "Midtrans" },
   { value: "xendit", label: "Xendit" },
   { value: "duitku", label: "Duitku" },
+  { value: "auto-qris", label: "Auto QRIS" },
 ];
 
 const storageProviders = [
@@ -37,6 +38,7 @@ export function SettingsForm({ settings }: { settings: StoreSettings | null }) {
   const manualConfig = (paymentConfig.manual ?? {}) as Record<string, unknown>;
   const storageConfig = (settings?.storage ?? {}) as Record<string, unknown>;
   const duitkuConfig = (paymentConfig.duitku ?? {}) as Record<string, unknown>;
+  const autoQrisConfig = (paymentConfig.autoQris ?? {}) as Record<string, unknown>;
   const resolveNumberString = (value: unknown, fallback: string) => {
     if (typeof value === "number") return String(value);
     if (typeof value === "string" && value.trim().length > 0) return value;
@@ -86,6 +88,18 @@ export function SettingsForm({ settings }: { settings: StoreSettings | null }) {
   const [duitkuExpiryPeriod, setDuitkuExpiryPeriod] = useState(
     resolveNumberString(duitkuConfig.expiryPeriod, "60"),
   );
+  const [autoQrisWorkerUrl, setAutoQrisWorkerUrl] = useState(
+    resolveString(autoQrisConfig.workerUrl, ""),
+  );
+  const [autoQrisApiKey, setAutoQrisApiKey] = useState(
+    resolveString(autoQrisConfig.apiKey, ""),
+  );
+  const [autoQrisStaticQris, setAutoQrisStaticQris] = useState(
+    resolveString(autoQrisConfig.staticQris, ""),
+  );
+  const [autoQrisCallbackUrl, setAutoQrisCallbackUrl] = useState(
+    resolveString(autoQrisConfig.callbackUrl, ""),
+  );
   const [isSubmitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -111,6 +125,12 @@ export function SettingsForm({ settings }: { settings: StoreSettings | null }) {
             callbackUrl: duitkuCallbackUrl || undefined,
             productDetails: duitkuProductDetails || undefined,
             expiryPeriod: Number(duitkuExpiryPeriod) || undefined,
+          },
+          autoQris: {
+            workerUrl: autoQrisWorkerUrl || undefined,
+            apiKey: autoQrisApiKey || undefined,
+            staticQris: autoQrisStaticQris || undefined,
+            callbackUrl: autoQrisCallbackUrl || undefined,
           },
         },
         storage: {
@@ -279,6 +299,42 @@ export function SettingsForm({ settings }: { settings: StoreSettings | null }) {
                   type="number"
                   value={duitkuExpiryPeriod}
                   onChange={(event) => setDuitkuExpiryPeriod(event.target.value)}
+                />
+              </div>
+            </div>
+          )}
+          {activeGateway === "auto-qris" && (
+            <div className="space-y-4 rounded-lg border p-4">
+              <div className="space-y-2">
+                <Label>Worker URL</Label>
+                <Input
+                  placeholder="https://your-worker-url.workers.dev"
+                  value={autoQrisWorkerUrl}
+                  onChange={(event) => setAutoQrisWorkerUrl(event.target.value)}
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>API Key</Label>
+                  <Input
+                    value={autoQrisApiKey}
+                    onChange={(event) => setAutoQrisApiKey(event.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Static QRIS Code</Label>
+                  <Input
+                    value={autoQrisStaticQris}
+                    onChange={(event) => setAutoQrisStaticQris(event.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Callback URL (optional)</Label>
+                <Input
+                  placeholder="Default uses APP_BASE_URL"
+                  value={autoQrisCallbackUrl}
+                  onChange={(event) => setAutoQrisCallbackUrl(event.target.value)}
                 />
               </div>
             </div>

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { deserializeProduct, deserializeSettings } from "@/lib/serializers";
 import { generateOrderNumber } from "@/lib/orders";
 import { createDuitkuInvoice } from "@/lib/duitku";
+import { generateAutoQrisInvoice } from "@/lib/auto-qris";
 import { siteConfig } from "@/config/site";
 
 const checkoutSchema = z.object({
@@ -135,6 +136,59 @@ export async function POST(request: Request) {
         paymentAction: {
           type: "redirect",
           url: invoice.paymentUrl,
+        },
+      });
+    }
+    case "auto-qris": {
+      const autoQrisConfig = (paymentConfig.autoQris as Record<string, unknown>) ?? {};
+      const invoice = await generateAutoQrisInvoice({
+        config: {
+          workerUrl: typeof autoQrisConfig.workerUrl === "string" ? autoQrisConfig.workerUrl : undefined,
+          apiKey: typeof autoQrisConfig.apiKey === "string" ? autoQrisConfig.apiKey : undefined,
+          staticQris: typeof autoQrisConfig.staticQris === "string" ? autoQrisConfig.staticQris : undefined,
+          callbackUrl:
+            typeof autoQrisConfig.callbackUrl === "string" ? autoQrisConfig.callbackUrl : undefined,
+          productDetails:
+            typeof autoQrisConfig.productDetails === "string"
+              ? autoQrisConfig.productDetails
+              : product.title,
+          expiryPeriod:
+            typeof autoQrisConfig.expiryPeriod === "number"
+              ? autoQrisConfig.expiryPeriod
+              : typeof autoQrisConfig.expiryPeriod === "string"
+              ? Number(autoQrisConfig.expiryPeriod)
+              : undefined,
+        },
+        orderNumber: order.orderNumber,
+        amount: order.totalIDR,
+      });
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          paymentRef: invoice.orderReference,
+          invoiceUrl: JSON.stringify({
+            combinedAmount: invoice.combinedAmount,
+            uniqueAmount: invoice.uniqueAmount,
+            originalAmount: invoice.originalAmount,
+          }),
+        },
+      });
+
+      return NextResponse.json({
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        paymentGateway,
+        paymentAction: {
+          type: "auto_qris",
+          qrString: invoice.dynamicQris,
+          orderReference: invoice.orderReference,
+          amounts: {
+            original: invoice.originalAmount,
+            unique: invoice.uniqueAmount,
+            combined: invoice.combinedAmount,
+          },
+          instructions: invoice.instructions?.customer ?? undefined,
         },
       });
     }

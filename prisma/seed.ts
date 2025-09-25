@@ -105,7 +105,13 @@ async function main() {
         duitku: {
           merchantCode: process.env.DUITKU_MERCHANT_CODE ?? "",
           apiKey: process.env.DUITKU_API_KEY ?? "",
-          baseUrl: process.env.DUITKU_BASE_URL ?? "https://sandbox.duitku.com",
+          baseUrl: process.env.DUITKU_BASE_URL ?? "https://api-sandbox.duitku.com",
+        },
+        autoQris: {
+          workerUrl: process.env.AUTOQRIS_WORKER_URL ?? "",
+          apiKey: process.env.AUTOQRIS_API_KEY ?? "",
+          staticQris: process.env.AUTOQRIS_STATIC_QRIS ?? "",
+          callbackUrl: process.env.AUTOQRIS_CALLBACK_URL ?? "",
         },
       }),
       storage: JSON.stringify({
@@ -138,7 +144,13 @@ async function main() {
         duitku: {
           merchantCode: process.env.DUITKU_MERCHANT_CODE ?? "",
           apiKey: process.env.DUITKU_API_KEY ?? "",
-          baseUrl: process.env.DUITKU_BASE_URL ?? "https://sandbox.duitku.com",
+          baseUrl: process.env.DUITKU_BASE_URL ?? "https://api-sandbox.duitku.com",
+        },
+        autoQris: {
+          workerUrl: process.env.AUTOQRIS_WORKER_URL ?? "",
+          apiKey: process.env.AUTOQRIS_API_KEY ?? "",
+          staticQris: process.env.AUTOQRIS_STATIC_QRIS ?? "",
+          callbackUrl: process.env.AUTOQRIS_CALLBACK_URL ?? "",
         },
       }),
       storage: JSON.stringify({

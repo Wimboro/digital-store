@@ -10,6 +10,7 @@ const paymentGatewayEnum = z.enum([
   "xendit",
   "manual-qris",
   "duitku",
+  "auto-qris",
 ]);
 
 const settingsSchema = z.object({
@@ -20,6 +21,32 @@ const settingsSchema = z.object({
     .object({
       activeGateway: paymentGatewayEnum,
       testMode: z.boolean().optional(),
+      manual: z
+        .object({
+          instructions: z.string().optional(),
+          qrImageUrl: z.string().optional(),
+        })
+        .optional(),
+      duitku: z
+        .object({
+          merchantCode: z.string().optional(),
+          apiKey: z.string().optional(),
+          baseUrl: z.string().optional(),
+          paymentMethod: z.string().optional(),
+          returnUrl: z.string().optional(),
+          callbackUrl: z.string().optional(),
+          productDetails: z.string().optional(),
+          expiryPeriod: z.union([z.string(), z.number()]).optional(),
+        })
+        .optional(),
+      autoQris: z
+        .object({
+          workerUrl: z.string().optional(),
+          apiKey: z.string().optional(),
+          staticQris: z.string().optional(),
+          callbackUrl: z.string().optional(),
+        })
+        .optional(),
     })
     .catchall(z.any()),
   storage: z
