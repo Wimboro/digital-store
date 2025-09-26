@@ -43,3 +43,24 @@ next-env.d.ts
 /src/generated/prisma
 
 *.db
+prisma/d1-migration.sql
+
+# Cloudflare
+.wrangler/
+wrangler.toml.backup
+
+# OpenNext build outputs
+.open-next/
+.vercel/
+
+# Deployment files
+*.tgz
+
+# Local environment files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+*.log
