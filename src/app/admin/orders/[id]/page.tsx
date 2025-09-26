@@ -4,13 +4,14 @@ import { deserializeOrder } from "@/lib/orders";
 import { OrderDetail } from "@/components/admin/order-detail";
 
 interface OrderDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
-  const orderRecord = await prisma.order.findUnique({ where: { id: params.id } });
+  const { id } = await params;
+  const orderRecord = await prisma.order.findUnique({ where: { id } });
 
   if (!orderRecord) {
     notFound();

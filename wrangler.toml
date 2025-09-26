@@ -1,0 +1,26 @@
+name = "digital-store-worker"
+main = ".open-next/worker.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Environment variables
+[vars]
+NODE_ENV = "production"
+DATABASE_URL = "libsql://digital-store-99227d5e6f694b7b848b60035e6c8e0b.turso.io"
+NEXTAUTH_SECRET = "your-secret-key-change-this-in-production"
+NEXTAUTH_URL = "https://digital-store-worker.mirrorcoy.workers.dev"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "digital-store"
+database_id = "99227d5e-6f69-4b7b-848b-60035e6c8e0b"
+
+# Durable Objects disabled for troubleshooting
+# [[durable_objects.bindings]]
+# name = "DO_QUEUE"
+# class_name = "DOQueueHandler"
+
+# [[migrations]]
+# tag = "v1"
+# new_sqlite_classes = ["DOQueueHandler"]

@@ -49,6 +49,7 @@ One-page digital goods storefront with instant checkout, secure download links, 
 | `npm run start`    | Start the production server                         |
 | `npm run lint`     | Run ESLint                                          |
 | `npm run db:seed`  | Seed database with demo admin and products          |
+| `npm run db:migrate:d1` | Generate SQL script for Cloudflare D1 migration |
 
 ## Key Directories
 
@@ -90,3 +91,4 @@ prisma/
 - Configure environment variables for the selected payment gateway, object storage, and email provider. For Duitku supply `DUITKU_MERCHANT_CODE` / `DUITKU_API_KEY` (and optionally `DUITKU_BASE_URL`). For Auto QRIS set `AUTOQRIS_WORKER_URL`, `AUTOQRIS_API_KEY`, `AUTOQRIS_STATIC_QRIS`, and `AUTOQRIS_CALLBACK_URL` (optional) before enabling in the admin settings.
 - `next.config.ts` sets `images.unoptimized = true` to support arbitrary remote assets (QR codes, marketing images). Adjust as needed for production CDN setups.
 - Remember to update `APP_BASE_URL` to the deployed origin so receipt emails contain valid download links.
+- To target Cloudflare D1, run `npm run db:migrate:d1` to emit `prisma/d1-migration.sql`, then apply it with `wrangler d1 execute <DB_NAME> --remote --file prisma/d1-migration.sql`.
