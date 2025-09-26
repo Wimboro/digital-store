@@ -22,6 +22,9 @@
     "pages:deploy:static": "npm run pages:build:static && wrangler pages deploy out --commit-dirty=true",
     "pages:dev": "next dev"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^5.19.0",
