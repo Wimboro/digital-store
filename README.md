@@ -75,7 +75,7 @@ prisma/
 
 - **Storefront**: search & tag filters, markdown product detail modal, checkout sheet integrated with active gateway configuration.
 - **Checkout Flow**: creates orders, returns gateway instructions or redirect URLs (Stripe / Midtrans / Xendit / Duitku / Manual QRIS / Auto QRIS), issues download tokens on successful payment.
-- **Secure Downloads**: `/api/download/:token` enforces expiry & quota, and redirects to storage URLs.
+- **Secure Downloads**: `/api/download/:token` enforces expiry & quota, with optional Cloudflare R2 signed URLs or custom storage domains.
 - **Admin Console**: dashboard metrics, order table + detail view (manual status updates & email resend), product CRUD (with file pointers), settings management for payment/storage/policies.
 - **Webhooks**: Stripe, Midtrans, Xendit, and Duitku handlers map gateway payloads to unified order updates. Auto QRIS polling endpoint verifies payments against detected push notifications.
 
@@ -88,7 +88,7 @@ prisma/
 ## Deployment Tips
 
 - Swap `DATABASE_URL` to your production database (SQLite, Postgres, etc.) and re-run migrations.
-- Configure environment variables for the selected payment gateway, object storage, and email provider. For Duitku supply `DUITKU_MERCHANT_CODE` / `DUITKU_API_KEY` (and optionally `DUITKU_BASE_URL`). For Auto QRIS set `AUTOQRIS_WORKER_URL`, `AUTOQRIS_API_KEY`, `AUTOQRIS_STATIC_QRIS`, and `AUTOQRIS_CALLBACK_URL` (optional) before enabling in the admin settings.
+- Configure environment variables for the selected payment gateway, object storage, and email provider. For Duitku supply `DUITKU_MERCHANT_CODE` / `DUITKU_API_KEY` (and optionally `DUITKU_BASE_URL`). For Auto QRIS set `AUTOQRIS_WORKER_URL`, `AUTOQRIS_API_KEY`, `AUTOQRIS_STATIC_QRIS`, and `AUTOQRIS_CALLBACK_URL` (optional). To use Cloudflare R2 signed links, provide `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_BUCKET` (or `R2_PUBLIC_BASE_URL` if serving files via a public domain) and set the storage provider to R2 in the admin settings.
 - `next.config.ts` sets `images.unoptimized = true` to support arbitrary remote assets (QR codes, marketing images). Adjust as needed for production CDN setups.
 - Remember to update `APP_BASE_URL` to the deployed origin so receipt emails contain valid download links.
 - To target Cloudflare D1, run `npm run db:migrate:d1` to emit `prisma/d1-migration.sql`, then apply it with `wrangler d1 execute <DB_NAME> --remote --file prisma/d1-migration.sql`.

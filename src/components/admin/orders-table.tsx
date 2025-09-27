@@ -62,10 +62,10 @@ export function OrdersTable({ orders }: OrdersTableProps) {
             placeholder="Cari order..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            className="md:w-56"
+            className="w-full md:w-56"
           />
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="md:w-40">
+            <SelectTrigger className="w-full md:w-40">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -77,7 +77,7 @@ export function OrdersTable({ orders }: OrdersTableProps) {
             </SelectContent>
           </Select>
           <Select value={gatewayFilter} onValueChange={setGatewayFilter}>
-            <SelectTrigger className="md:w-40">
+            <SelectTrigger className="w-full md:w-40">
               <SelectValue placeholder="Gateway" />
             </SelectTrigger>
             <SelectContent>

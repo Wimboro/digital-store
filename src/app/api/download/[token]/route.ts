@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { deserializeProduct, deserializeSettings } from "@/lib/serializers";
+import { resolveDownloadUrl } from "@/lib/storage";
 
 export async function GET(request: NextRequest, context: { params: Promise<{ token: string }> }) {
   const { token } = await context.params;
@@ -41,10 +42,15 @@ export async function GET(request: NextRequest, context: { params: Promise<{ tok
   const product = deserializeProduct(downloadToken.product);
 
   const storage = settings.storage as Record<string, unknown>;
-  const baseUrl = typeof storage.baseUrl === "string" ? storage.baseUrl : null;
-  const url = baseUrl
-    ? `${baseUrl.replace(/\/$/, "")}/${product.fileKey}`
-    : new URL(`/downloads/${product.fileKey}`, request.url).toString();
+  const fallbackUrl = new URL(`/downloads/${product.fileKey}`, request.url).toString();
+  let url: string;
+
+  try {
+    url = await resolveDownloadUrl(product.fileKey, storage, fallbackUrl);
+  } catch (error) {
+    console.error("Failed to resolve download URL", error);
+    return NextResponse.json({ error: "Tidak dapat menyiapkan unduhan." }, { status: 500 });
+  }
 
   await prisma.downloadToken.update({
     where: { id: downloadToken.id },

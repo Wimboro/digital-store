@@ -64,6 +64,19 @@ export function SettingsForm({ settings }: { settings: StoreSettings | null }) {
   const [storageBaseUrl, setStorageBaseUrl] = useState(
     resolveString(storageConfig.baseUrl, ""),
   );
+  const [storageBucket, setStorageBucket] = useState(resolveString(storageConfig.bucket, ""));
+  const [storageAccessKey, setStorageAccessKey] = useState(
+    resolveString(storageConfig.accessKey, ""),
+  );
+  const [storageSecretKey, setStorageSecretKey] = useState(
+    resolveString(storageConfig.secretKey, ""),
+  );
+  const [storageAccountId, setStorageAccountId] = useState(
+    resolveString(storageConfig.accountId, ""),
+  );
+  const [storagePublicBaseUrl, setStoragePublicBaseUrl] = useState(
+    resolveString(storageConfig.publicBaseUrl, ""),
+  );
   const [manualInstructions, setManualInstructions] = useState(
     resolveString(manualConfig.instructions, "Selesaikan pembayaran melalui QRIS dan kirim bukti ke email kami."),
   );
@@ -136,6 +149,11 @@ export function SettingsForm({ settings }: { settings: StoreSettings | null }) {
         storage: {
           provider: storageProvider,
           baseUrl: storageBaseUrl,
+          bucket: storageBucket || undefined,
+          accessKey: storageAccessKey || undefined,
+          secretKey: storageSecretKey || undefined,
+          accountId: storageAccountId || undefined,
+          publicBaseUrl: storagePublicBaseUrl || undefined,
         },
         policy: {
           downloadExpiryHours: Number(downloadExpiryHours) || 72,
@@ -360,8 +378,65 @@ export function SettingsForm({ settings }: { settings: StoreSettings | null }) {
           </div>
           <div className="space-y-2">
             <Label>Base URL</Label>
-            <Input value={storageBaseUrl} onChange={(event) => setStorageBaseUrl(event.target.value)} />
+            <Input
+              value={storageBaseUrl}
+              onChange={(event) => setStorageBaseUrl(event.target.value)}
+              placeholder={storageProvider === "r2" ? "Opsional, gunakan custom domain" : "http://host/path"}
+            />
+            <p className="text-xs text-muted-foreground">
+              Kosongkan untuk menggunakan bawaan aplikasi atau signed URL.
+            </p>
           </div>
+          {storageProvider === "r2" && (
+            <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Account ID</Label>
+                  <Input
+                    value={storageAccountId}
+                    onChange={(event) => setStorageAccountId(event.target.value)}
+                    placeholder="cf_account_id"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Bucket</Label>
+                  <Input
+                    value={storageBucket}
+                    onChange={(event) => setStorageBucket(event.target.value)}
+                    placeholder="digital-store-products"
+                  />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Access Key ID</Label>
+                  <Input
+                    value={storageAccessKey}
+                    onChange={(event) => setStorageAccessKey(event.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Secret Access Key</Label>
+                  <Input
+                    type="password"
+                    value={storageSecretKey}
+                    onChange={(event) => setStorageSecretKey(event.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Public Base URL (opsional)</Label>
+                <Input
+                  value={storagePublicBaseUrl}
+                  placeholder="https://files.yourdomain.com"
+                  onChange={(event) => setStoragePublicBaseUrl(event.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Jika diisi, file akan diakses via URL ini tanpa signed URL.
+                </p>
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="space-y-4">

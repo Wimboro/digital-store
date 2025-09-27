@@ -155,9 +155,11 @@ export function ProductsManager({ products }: { products: StorefrontProduct[] })
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold">Produk</h1>
-        <Button onClick={openCreate}>Produk Baru</Button>
+        <Button className="w-full sm:w-auto" onClick={openCreate}>
+          Produk Baru
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -191,11 +193,21 @@ export function ProductsManager({ products }: { products: StorefrontProduct[] })
                   </Badge>
                 ))}
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => openEdit(product)}>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                  onClick={() => openEdit(product)}
+                >
                   Edit
                 </Button>
-                <Button variant="destructive" size="sm" onClick={() => handleDelete(product)}>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                  onClick={() => handleDelete(product)}
+                >
                   Hapus
                 </Button>
               </div>

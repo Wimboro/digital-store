@@ -120,6 +120,8 @@ async function main() {
         baseUrl: process.env.STORAGE_BASE_URL ?? "",
         accessKey: process.env.STORAGE_ACCESS_KEY ?? "",
         secretKey: process.env.STORAGE_SECRET_KEY ?? "",
+        accountId: process.env.R2_ACCOUNT_ID ?? "",
+        publicBaseUrl: process.env.R2_PUBLIC_BASE_URL ?? "",
       }),
       policy: JSON.stringify({
         downloadExpiryHours: Number(process.env.DOWNLOAD_EXPIRY_HOURS ?? "72"),
@@ -159,6 +161,8 @@ async function main() {
         baseUrl: process.env.STORAGE_BASE_URL ?? "",
         accessKey: process.env.STORAGE_ACCESS_KEY ?? "",
         secretKey: process.env.STORAGE_SECRET_KEY ?? "",
+        accountId: process.env.R2_ACCOUNT_ID ?? "",
+        publicBaseUrl: process.env.R2_PUBLIC_BASE_URL ?? "",
       }),
       policy: JSON.stringify({
         downloadExpiryHours: Number(process.env.DOWNLOAD_EXPIRY_HOURS ?? "72"),
