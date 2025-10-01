@@ -22,6 +22,53 @@ One-page digital goods storefront with instant checkout, secure download links, 
    - Copy `.env.example` to `.env` and adjust values (set `NEXTAUTH_SECRET`, update store identity, etc.).
    - `DATABASE_URL` defaults to `file:./dev.db`, which lives inside the `prisma` directory.
 
+### Environment configuration
+
+Create a `.env` file in the project root using values that match your stack. The snippet below mirrors a local SQLite setup with optional payment and storage providers disabled by default:
+
+```
+DATABASE_URL="file:./prisma/dev.db"
+NEXTAUTH_SECRET="change-me"
+
+# Branding
+STORE_NAME="Digital Goods Store"
+STORE_CONTACT_EMAIL="hello@store.test"
+
+# Storage (leave empty for local filesystem fallback)
+STORAGE_PROVIDER="local"
+STORAGE_BASE_URL=""
+STORAGE_BUCKET=""
+
+# Download policy overrides
+DOWNLOAD_EXPIRY_HOURS="72"
+DOWNLOAD_MAX_COUNT="3"
+
+# Optional email providers
+RESEND_API_KEY=""
+SMTP_URL=""
+
+# Payment gateways (populate when integrating)
+STRIPE_SECRET_KEY=""
+MIDTRANS_SERVER_KEY=""
+MIDTRANS_CLIENT_KEY=""
+MIDTRANS_MERCHANT_ID=""
+XENDIT_API_KEY=""
+DUITKU_MERCHANT_CODE=""
+DUITKU_API_KEY=""
+
+# Auto QRIS worker (optional)
+AUTOQRIS_WORKER_URL=""
+AUTOQRIS_API_KEY=""
+AUTOQRIS_STATIC_QRIS=""
+
+# Cloudflare R2 (optional)
+R2_ACCOUNT_ID=""
+R2_ACCESS_KEY_ID=""
+R2_SECRET_ACCESS_KEY=""
+R2_BUCKET=""
+R2_PUBLIC_BASE_URL=""
+```
+
 3. **Initialize the database**
    - Apply the schema to SQLite using the provided migration SQL:
      ```bash
